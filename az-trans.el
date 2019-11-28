@@ -1,5 +1,6 @@
 ;; -*- coding: utf-8 -*-
 (require 'request)
+(require 'pos-tip)
 (require 'subr-x)
 (require 'json)
 
@@ -36,21 +37,20 @@
 		    :timeout 5
 		    :parser 'json-read
 		    :params '(("api-version" . "3.0")
-			      ("from" . "en-us") ("to" . "zh-cn"))
+			      ("from" . "en-us") ("to" . "zh-Hans"))
 		    :headers `(("Ocp-Apim-Subscription-Key" . ,*trans-key*)
 			       ("Content-Type" . "application/json"))
 		    :data (json-encode `((("text" . ,*trans-word*))))
 		    :success (cl-function
 			      (lambda (&key data &allow-other-keys)
-				(let ((text (rest (assoc
-						   'text
-						   (elt (rest (assoc
-							       'translations
-							       (elt data 0)))
-							0)))))
-				  (message "%s => %s" *trans-word* text))))
+				(let* ((text (alist-get 'text (elt (alist-get 'translations (elt data 0)) 0)))
+				       (msg (format "%s => %s" *trans-word* text)))
+				  ;; (pos-tip-show-no-propertize msg)
+				  (message msg))))
 		    :error (cl-function (lambda (&key data &allow-other-keys) (message "Something wrong..."))))
-	   (message "%s => ..." *trans-word*))))
+	   (let ((msg (format "%s => ..." *trans-word*)))
+	     ;; (pos-tip-show-no-propertize msg)
+	     (message msg)))))
 
 (global-set-key (kbd "C-`") 'az-trans)
 (provide 'az-trans)
